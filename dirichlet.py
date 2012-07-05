@@ -106,7 +106,7 @@ def meanprec(a):
     m = a / s
     return (m,s)
 
-def dirichlet(D1, D2):
+def dirichlet(D1, D2, maxiter=None):
     '''Test for statistical difference between observed proportions.
 
     Parameters
@@ -135,9 +135,9 @@ def dirichlet(D1, D2):
         raise Exception("D1 and D2 must have the same number of columns")
 
     D0 = vstack((D1, D2))
-    a0 = dirichlet_mle(D0)
-    a1 = dirichlet_mle(D1)
-    a2 = dirichlet_mle(D2)
+    a0 = dirichlet_mle(D0, maxiter=maxiter)
+    a1 = dirichlet_mle(D1, maxiter=maxiter)
+    a2 = dirichlet_mle(D2, maxiter=maxiter)
 
     D = 2 * (loglikelihood(D1, a1) + loglikelihood(D2, a2)
          - loglikelihood(D0, a0))

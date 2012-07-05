@@ -2,92 +2,13 @@ import sys
 from scipy.stats import chi2
 from scipy.special import (psi, polygamma, gammaln)
 from scipy.optimize import (fsolve)
-from numpy import (array, ones, arange, log, diag, vstack)
+from numpy import (array, asanyarray, ones, arange, log, diag, vstack, exp)
+from numpy import (asarray, ndarray, zeros, isscalar)
 from numpy.linalg import norm
 
-def ipsi(y):
-    '''Inverse of psi (digamma) using iterative root finder. For the purposes
-    of Dirichlet MLE, since the parameters a[i] must always
-    satisfy a > 0, we define ipsi :: R -> (0,inf).
+euler = -1*psi(1) # Euler-Mascheroni constant
 
-    The inverse solver can have trouble if numbers in the array span more
-    than 6 orders of magnitude. The main workaround is to pass them in
-    separately.'''
-    ya = array(y)
-    return fsolve((lambda x: psi(x) - ya),
-                  ones(ya.shape)*0.1, # x0 > 1 creates problems for y < 0
-                  fprime=(lambda x: diag(polygamma(1, x))),
-                 )
-
-def loglikelihood(D, a):
-    '''Compute log likelihood of Dirichlet distribution, i.e. log p(D|a).
-
-    Parameters
-    ----------
-    D : 2D array
-        where ``N`` is the number of observations, ``K`` is the number of
-        parameters for the Dirichlet distribution.
-    a : array
-        Parameters for the Dirichlet distribution.
-
-    Returns
-    -------
-    logl : float
-        The log likelihood of the Dirichlet distribution'''
-    N, K = D.shape
-    logps = (1.0/N)*log(D).sum(axis=0)
-    return N*(gammaln(a.sum()) - gammaln(a).sum() + ((a - 1)*logps).sum())
-
-def dirichlet_mle(D, a0=None, tol=1e-9, maxiter=None):
-    '''Iteratively computes maximum likelihood Dirichlet distribution
-    for an observed data set, i.e. a for which log p(D|a) is maximum.
-
-    Parameters
-    ----------
-    D : 2D array
-        ``N x K`` array of numbers from [0,1] where ``N`` is the number of
-        observations, ``K`` is the number of parameters for the Dirichlet
-        distribution.
-    a0 : array
-        Initial guess for parameters. If not given, will be estimated from
-        D.
-    tol : float
-        If Euclidean distance between successive parameter arrays is less than
-        ``tol``, calculation is taken to have converged.
-    maxiter : int
-        Maximum number of iterations to take calculations. Default is
-        ``sys.maxint``.
-
-    Returns
-    -------
-    a : array
-        Maximum likelihood parameters for Dirichlet distribution.'''
-    N, K = D.shape
-    logps = (1.0/N)*log(D).sum(axis=0)
-
-    if a0 is None:
-        E = D.mean(axis=0)
-        E2 = (D**2).mean(axis=0)
-        a0 = ((E[0]-E2[0])/(E2[0]-E[0]**2)) * E
-
-    # Start updating
-    a1 = ipsi(psi(a0.sum()) + logps)
-
-    if maxiter is None:
-        maxiter = sys.maxint
-
-    for i in xrange(maxiter):
-        # if norm(a1-a0) < tol:
-        if abs(loglikelihood(D, a1)-loglikelihood(D, a0)) < tol: # much faster
-            return a1
-        else:
-            a0 = a1
-            a1 = ipsi(psi(a0.sum()) + logps)
-
-    raise Exception('Failed to converge after {} iterations, values are {}.'
-                    .format(maxiter, a1))
-
-def meanprec(a):
+def mean_precision(a):
     '''Mean and precision of Dirichlet distribution.
 
     Parameters
@@ -142,3 +63,213 @@ def dirichlet(D1, D2, maxiter=None):
     D = 2 * (loglikelihood(D1, a1) + loglikelihood(D2, a2)
          - loglikelihood(D0, a0))
     return (D, chi2.sf(D, K1), a0, a1, a2)
+
+def loglikelihood(D, a):
+    '''Compute log likelihood of Dirichlet distribution, i.e. log p(D|a).
+
+    Parameters
+    ----------
+    D : 2D array
+        where ``N`` is the number of observations, ``K`` is the number of
+        parameters for the Dirichlet distribution.
+    a : array
+        Parameters for the Dirichlet distribution.
+
+    Returns
+    -------
+    logl : float
+        The log likelihood of the Dirichlet distribution'''
+    N, K = D.shape
+    logps = (1.0/N)*log(D).sum(axis=0)
+    return N*(gammaln(a.sum()) - gammaln(a).sum() + ((a - 1)*logps).sum())
+
+def dirichlet_mle(D, tol=1e-9, method='fixedpoint', maxiter=None):
+    '''Iteratively computes maximum likelihood Dirichlet distribution
+    for an observed data set, i.e. a for which log p(D|a) is maximum.
+
+    Parameters
+    ----------
+    D : 2D array
+        ``N x K`` array of numbers from [0,1] where ``N`` is the number of
+        observations, ``K`` is the number of parameters for the Dirichlet
+        distribution.
+    tol : float
+        If Euclidean distance between successive parameter arrays is less than
+        ``tol``, calculation is taken to have converged.
+    method : string
+        One of ``'fixedpoint'``, ``'meanprecision'``, ``'newton'``;
+        designates method by which to find MLE Dirichlet distribution.
+        Default is ``'fixedpoint'``, and this is the only one implemented.
+    maxiter : int
+        Maximum number of iterations to take calculations. Default is
+        ``sys.maxint``.
+
+    Returns
+    -------
+    a : array
+        Maximum likelihood parameters for Dirichlet distribution.'''
+    return _fixedpoint(D, a0, tol=tol, maxiter)
+
+def _fixedpoint(D, tol=1e-9, maxiter=None):
+    N, K = D.shape
+    logp = (1.0/N)*log(D).sum(axis=0)
+    a0 = _init_a(D)
+
+    # Start updating
+    if maxiter is None:
+        maxiter = sys.maxint
+    for i in xrange(maxiter):
+        a1 = _ipsi(psi(a0.sum()) + logp)
+        # if norm(a1-a0) < tol:
+        if abs(loglikelihood(D, a1)-loglikelihood(D, a0)) < tol: # much faster
+            return a1
+    raise Exception('Failed to converge after {} iterations, values are {}.'
+                    .format(maxiter, a1))
+
+def _meanprecision(D, tol=1e-9, maxiter=None):
+    '''Mean and precision alternating method for MLE of Dirichlet
+    distribution'''
+    N, K = D.shape
+    logp = (1.0/N)*log(D).sum(axis=0)
+    a0 = _init_a(D)
+    s0 = a0.sum()
+    if s0 < 0:
+        a0 = a0/s0
+        s0 = 1
+    elif s0 == 0:
+        a0 = ones(a.shape) / len(a)
+        s0 = 1
+    m0 = a0/s0
+
+    # Start updating
+    for i in xrange(maxiter):
+        a1 = _fit_s(D, a0, logp)
+        s1 = sum(a1)
+        a1 = _fit_m(D, a1, 1)
+        m = a1/s1
+        # if norm(a1-a0) < tol:
+        if abs(loglikelihood(D, a1)-loglikelihood(D, a0)) < tol: # much faster
+            return a1
+    raise Exception('Failed to converge after {} iterations, values are {}.'
+                    .format(maxiter, a1))
+
+def _fit_s(D, a0, logp, tol=1e-9, maxiter=100):
+    N, K = D.shape
+    s1 = a0.sum()
+    m = a0 / s1
+    mlogp = (m*logp).sum()
+    for i in xrange(maxiter):
+        s0 = s1
+        g = psi(s1) - (m*psi(s1*m)).sum() + mlogp
+        h = trigamma(s1) - ((m**2)*trigamma(s1*m)).sum()
+        success = False
+
+        if g + s1 * h < 0:
+            s1 = 1/(1/s0 + g/h/(s0**2))
+        if s1 <= 0:
+            s1 = s0 * exp(-g/(s0*h + g)) # Newton on log s
+        if s1 <= 0:
+            s1 = 1/(1/s0 + g/((s**2)*h + 2*s*g)) # Newton on 1/s
+        if s1 <= 0:
+            s1 = s0 - g/h # Newton
+        if s1 <= 0:
+            raise Exception('Unable to update s from {}'.format(s0))
+
+        a = s1 * m
+        if abs(s1 - s0) < tol:
+            return a
+
+    raise Exception('Failed to converge after {} iterations, s is {}'
+            .format(maxiter, s))
+
+def _fit_m(D, a0, logp, tol=1e-9, maxiter=1000):
+    N,K = D.shape
+    s = a0.sum()
+
+    a1 = a0
+    for i in xrange(maxiter):
+        m = a0 / s
+        a1 = _ipsi(logp + (m*(psi(a0) - logp)).sum())
+        a1 = a1/a1.sum() * s
+
+        if norm(a1 - a0) < tol:
+            return a
+        a0 = a1
+
+    raise Exception('Failed to converge after {} iterations, s is {}'
+            .format(maxiter, s))
+
+def _piecewise(x, condlist, funclist, *args, **kw):
+    '''Fixed version of numpy.piecewise for 0-d arrays'''
+    x = asanyarray(x)
+    n2 = len(funclist)
+    if isscalar(condlist):
+        condlist = [condlist]
+    condlist = [asarray(c, dtype=bool) for c in condlist]
+    n = len(condlist)
+
+    zerod = False
+    # This is a hack to work around problems with NumPy's
+    #  handling of 0-d arrays and boolean indexing with
+    #  numpy.bool_ scalars
+    if x.ndim == 0:
+        x = x[None]
+        zerod = True
+        newcondlist = []
+        for k in range(n):
+            if condlist[k].ndim == 0:
+                condition = condlist[k][None]
+            else:
+                condition = condlist[k]
+            newcondlist.append(condition)
+        condlist = newcondlist
+
+    if n == n2-1:  # compute the "otherwise" condition.
+        totlist = condlist[0]
+        for k in range(1, n):
+            totlist |= condlist[k]
+        condlist.append(~totlist)
+        n += 1
+    if (n != n2):
+        raise ValueError(
+                "function list and condition list must be the same")
+
+    y = zeros(x.shape, x.dtype)
+    for k in range(n):
+        item = funclist[k]
+        if not callable(item):
+            y[condlist[k]] = item
+        else:
+            vals = x[condlist[k]]
+            if vals.size > 0:
+                y[condlist[k]] = item(vals, *args, **kw)
+    if zerod:
+        y = y.squeeze()
+    return y
+
+def _init_a(D):
+    '''Initial guess for Dirichlet alpha parameters given data D'''
+    E = D.mean(axis=0)
+    E2 = (D**2).mean(axis=0)
+    return ((E[0] - E2[0])/(E2[0]-E[0]**2)) * E
+
+def _ipsi(y, tol=1.48e-9, maxiter=10):
+    '''Inverse of psi (digamma) using Newton's method. For the purposes
+    of Dirichlet MLE, since the parameters a[i] must always
+    satisfy a > 0, we define ipsi :: R -> (0,inf).'''
+
+    y = asanyarray(y, dtype='float')
+    x0 = _piecewise(y, [y >= -2.22, y < -2.22],
+            [(lambda x: exp(x) + 0.5), (lambda x: -1/(x+euler))])
+    for i in xrange(maxiter):
+        x1 = x0 - (psi(x0) - y)/_trigamma(x0)
+        if norm(x1 - x0) < tol:
+            return x1
+        x0 = x1
+    raise Exception(
+        'Unable to converge in {} iterations, value is {}'.format(maxiter, x1))
+
+def _trigamma(x):
+    return polygamma(1, x)
+
+

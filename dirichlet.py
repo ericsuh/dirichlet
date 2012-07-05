@@ -2,7 +2,7 @@ import sys
 from scipy.stats import chi2
 from scipy.special import (psi, polygamma, gammaln)
 from scipy.optimize import (fsolve)
-from numpy import (array, ones, arange, log, diag)
+from numpy import (array, ones, arange, log, diag, vstack)
 from numpy.linalg import norm
 
 def ipsi(y):
@@ -77,7 +77,8 @@ def dirichlet_mle(D, a0=None, tol=1e-9, maxiter=None):
         maxiter = sys.maxint
 
     for i in xrange(maxiter):
-        if norm(a1-a0) < tol:
+        # if norm(a1-a0) < tol:
+        if abs(loglikelihood(D, a1)-loglikelihood(D, a0)) < tol: # much faster
             return a1
         else:
             a0 = a1
@@ -133,7 +134,7 @@ def dirichlet(D1, D2):
     if K1 != K2:
         raise Exception("D1 and D2 must have the same number of columns")
 
-    D0 = numpy.vstack(D1, D2)
+    D0 = vstack((D1, D2))
     a0 = dirichlet_mle(D0)
     a1 = dirichlet_mle(D1)
     a2 = dirichlet_mle(D2)

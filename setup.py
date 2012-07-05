@@ -3,7 +3,7 @@
 # This file is subject to the terms and conditions defined in file
 # 'LICENSE.txt', which is part of this source code package.
 
-from setuptools import setup
+from setuptools import setup, find_packages
 
 setup(
     name='dirichlet',
@@ -11,10 +11,11 @@ setup(
     description='Calculates Dirichlet test',
     author='Eric Suh',
     author_email='contact@ericsuh.com',
-    packages = find_packages(),
+    packages=['dirichlet.py'],
+    provides=['dirichlet'],
     install_requires = [
         'scipy >= 0.10.1',
-        'numpy >= 1.8.0',
+        'numpy >= 1.7.0',
     ],
     url='http://github.com/ericsuh/dirichlet',
     download_url='https://github.com/ericsuh/dirichlet/zipball/master',

@@ -8,26 +8,7 @@ from numpy.linalg import norm
 
 euler = -1*psi(1) # Euler-Mascheroni constant
 
-def mean_precision(a):
-    '''Mean and precision of Dirichlet distribution.
-
-    Parameters
-    ----------
-    a : array
-        Parameters of Dirichlet distribution.
-
-    Returns
-    -------
-    mean : array
-        Numbers [0,1] of the means of the Dirichlet distribution.
-    precision : float
-        Precision or concentration parameter of the Dirichlet distribution.'''
-
-    s = a.sum()
-    m = a / s
-    return (m,s)
-
-def dirichlet(D1, D2, maxiter=None):
+def dirichlet(D1, D2, method='fixedpoint', maxiter=None):
     '''Test for statistical difference between observed proportions.
 
     Parameters
@@ -37,6 +18,13 @@ def dirichlet(D1, D2, maxiter=None):
         Both ``D1`` and ``D2`` must have the same number of columns, which are
         the different levels or categorical possibilities. Each row of the
         matrices must add up to 1.
+    method : string
+        One of ``'fixedpoint'``, ``'meanprecision'``, ``'newton'``;
+        designates method by which to find MLE Dirichlet distribution.
+        Default is ``'fixedpoint'``, and this is the only one implemented.
+    maxiter : int
+        Maximum number of iterations to take calculations. Default is
+        ``sys.maxint``.
 
     Returns
     -------
@@ -56,13 +44,32 @@ def dirichlet(D1, D2, maxiter=None):
         raise Exception("D1 and D2 must have the same number of columns")
 
     D0 = vstack((D1, D2))
-    a0 = dirichlet_mle(D0, maxiter=maxiter)
-    a1 = dirichlet_mle(D1, maxiter=maxiter)
-    a2 = dirichlet_mle(D2, maxiter=maxiter)
+    a0 = dirichlet_mle(D0, method=method, maxiter=maxiter)
+    a1 = dirichlet_mle(D1, method=method, maxiter=maxiter)
+    a2 = dirichlet_mle(D2, method=method, maxiter=maxiter)
 
     D = 2 * (loglikelihood(D1, a1) + loglikelihood(D2, a2)
          - loglikelihood(D0, a0))
     return (D, chi2.sf(D, K1), a0, a1, a2)
+
+def mean_precision(a):
+    '''Mean and precision of Dirichlet distribution.
+
+    Parameters
+    ----------
+    a : array
+        Parameters of Dirichlet distribution.
+
+    Returns
+    -------
+    mean : array
+        Numbers [0,1] of the means of the Dirichlet distribution.
+    precision : float
+        Precision or concentration parameter of the Dirichlet distribution.'''
+
+    s = a.sum()
+    m = a / s
+    return (m,s)
 
 def loglikelihood(D, a):
     '''Compute log likelihood of Dirichlet distribution, i.e. log p(D|a).
@@ -80,8 +87,8 @@ def loglikelihood(D, a):
     logl : float
         The log likelihood of the Dirichlet distribution'''
     N, K = D.shape
-    logps = (1.0/N)*log(D).sum(axis=0)
-    return N*(gammaln(a.sum()) - gammaln(a).sum() + ((a - 1)*logps).sum())
+    logp = log(D).mean(axis=0)
+    return N*(gammaln(a.sum()) - gammaln(a).sum() + ((a - 1)*logp).sum())
 
 def dirichlet_mle(D, tol=1e-9, method='fixedpoint', maxiter=None):
     '''Iteratively computes maximum likelihood Dirichlet distribution
@@ -108,11 +115,15 @@ def dirichlet_mle(D, tol=1e-9, method='fixedpoint', maxiter=None):
     -------
     a : array
         Maximum likelihood parameters for Dirichlet distribution.'''
-    return _fixedpoint(D, a0, tol=tol, maxiter)
+
+    if method == 'meanprecision':
+        return _meanprecision(D, tol=tol, maxiter=maxiter)
+    else:
+        return _fixedpoint(D, tol=tol, maxiter=maxiter)
 
 def _fixedpoint(D, tol=1e-9, maxiter=None):
     N, K = D.shape
-    logp = (1.0/N)*log(D).sum(axis=0)
+    logp = log(D).mean(axis=0)
     a0 = _init_a(D)
 
     # Start updating
@@ -130,7 +141,7 @@ def _meanprecision(D, tol=1e-9, maxiter=None):
     '''Mean and precision alternating method for MLE of Dirichlet
     distribution'''
     N, K = D.shape
-    logp = (1.0/N)*log(D).sum(axis=0)
+    logp = log(D).mean(axis=0)
     a0 = _init_a(D)
     s0 = a0.sum()
     if s0 < 0:
@@ -145,7 +156,7 @@ def _meanprecision(D, tol=1e-9, maxiter=None):
     for i in xrange(maxiter):
         a1 = _fit_s(D, a0, logp)
         s1 = sum(a1)
-        a1 = _fit_m(D, a1, 1)
+        a1 = _fit_m(D, a1, logp)
         m = a1/s1
         # if norm(a1-a0) < tol:
         if abs(loglikelihood(D, a1)-loglikelihood(D, a0)) < tol: # much faster
@@ -161,7 +172,7 @@ def _fit_s(D, a0, logp, tol=1e-9, maxiter=100):
     for i in xrange(maxiter):
         s0 = s1
         g = psi(s1) - (m*psi(s1*m)).sum() + mlogp
-        h = trigamma(s1) - ((m**2)*trigamma(s1*m)).sum()
+        h = _trigamma(s1) - ((m**2)*_trigamma(s1*m)).sum()
         success = False
 
         if g + s1 * h < 0:
@@ -169,7 +180,7 @@ def _fit_s(D, a0, logp, tol=1e-9, maxiter=100):
         if s1 <= 0:
             s1 = s0 * exp(-g/(s0*h + g)) # Newton on log s
         if s1 <= 0:
-            s1 = 1/(1/s0 + g/((s**2)*h + 2*s*g)) # Newton on 1/s
+            s1 = 1/(1/s0 + g/((s0**2)*h + 2*s0*g)) # Newton on 1/s
         if s1 <= 0:
             s1 = s0 - g/h # Newton
         if s1 <= 0:
@@ -271,5 +282,3 @@ def _ipsi(y, tol=1.48e-9, maxiter=10):
 
 def _trigamma(x):
     return polygamma(1, x)
-
-

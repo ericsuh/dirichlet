@@ -134,6 +134,7 @@ def _fixedpoint(D, tol=1e-9, maxiter=None):
         # if norm(a1-a0) < tol:
         if abs(loglikelihood(D, a1)-loglikelihood(D, a0)) < tol: # much faster
             return a1
+        a0 = a1
     raise Exception('Failed to converge after {} iterations, values are {}.'
                     .format(maxiter, a1))
 
@@ -153,6 +154,8 @@ def _meanprecision(D, tol=1e-9, maxiter=None):
     m0 = a0/s0
 
     # Start updating
+    if maxiter is None:
+        maxiter = sys.maxint
     for i in xrange(maxiter):
         a1 = _fit_s(D, a0, logp)
         s1 = sum(a1)
@@ -204,7 +207,7 @@ def _fit_m(D, a0, logp, tol=1e-9, maxiter=1000):
         a1 = a1/a1.sum() * s
 
         if norm(a1 - a0) < tol:
-            return a
+            return a1
         a0 = a1
 
     raise Exception('Failed to converge after {} iterations, s is {}'

@@ -217,7 +217,9 @@ def _piecewise(x, condlist, funclist, *args, **kw):
     '''Fixed version of numpy.piecewise for 0-d arrays'''
     x = asanyarray(x)
     n2 = len(funclist)
-    if isscalar(condlist):
+    if isscalar(condlist) or \
+            (isinstance(condlist, np.ndarray) and condlist.ndim == 0) or \
+            (x.ndim > 0 and condlist[0].ndim == 0):
         condlist = [condlist]
     condlist = [asarray(c, dtype=bool) for c in condlist]
     n = len(condlist)

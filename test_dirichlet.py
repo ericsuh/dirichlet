@@ -1,3 +1,8 @@
+# This file is subject to the terms and conditions defined in file
+# 'LICENSE.txt', which is part of this source code package.
+
+'''Tests for the functions in the Dirichlet package.'''
+
 import pytest
 import dirichlet
 import numpy

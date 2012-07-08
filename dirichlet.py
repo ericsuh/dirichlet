@@ -1,11 +1,33 @@
+# Copyright (C) 2012 Eric J. Suh
+#
+# This file is subject to the terms and conditions defined in file
+# 'LICENSE.txt', which is part of this source code package.
+
+'''Dirichlet.py
+
+Maximum likelihood estimation and likelihood ratio tests of Dirichlet
+distribution models of data.
+
+Most of this package is a port of Thomas P. Minka's wonderful Fastfit MATLAB
+code. Much thanks to him for that and his clear paper "Estimating a Dirichlet
+distribution". See the following URL for more information:
+
+    http://research.microsoft.com/en-us/um/people/minka/'''
+
 import sys
-from scipy.stats import chi2
+import scipy as sp
 from scipy.special import (psi, polygamma, gammaln)
-from scipy.optimize import (fsolve)
-from numpy import (array, asanyarray, ones, arange, log, diag, vstack, exp)
-from numpy import (asarray, ndarray, zeros, isscalar)
+from numpy import (array, asanyarray, ones, arange, log, diag, vstack, exp,
+        asarray, ndarray, zeros, isscalar)
 from numpy.linalg import norm
 import numpy as np
+
+__all__ = [
+    'dirichlet',
+    'dirichlet_mle',
+    'meanprecision',
+    'loglikelihood',
+]
 
 euler = -1*psi(1) # Euler-Mascheroni constant
 
@@ -51,9 +73,9 @@ def dirichlet(D1, D2, method='meanprecision', maxiter=None):
 
     D = 2 * (loglikelihood(D1, a1) + loglikelihood(D2, a2)
          - loglikelihood(D0, a0))
-    return (D, chi2.sf(D, K1), a0, a1, a2)
+    return (D, sp.stats.chi2.sf(D, K1), a0, a1, a2)
 
-def mean_precision(a):
+def meanprecision(a):
     '''Mean and precision of Dirichlet distribution.
 
     Parameters
@@ -123,6 +145,7 @@ def dirichlet_mle(D, tol=1e-9, method='meanprecision', maxiter=None):
         return _fixedpoint(D, tol=tol, maxiter=maxiter)
 
 def _fixedpoint(D, tol=1e-9, maxiter=None):
+    '''Simple fixed point iteration method for MLE of Dirichlet distribution'''
     N, K = D.shape
     logp = log(D).mean(axis=0)
     a0 = _init_a(D)
@@ -170,6 +193,8 @@ def _meanprecision(D, tol=1e-9, maxiter=None):
                     .format(maxiter, a1))
 
 def _fit_s(D, a0, logp, tol=1e-9, maxiter=100):
+    '''Assuming a fixed mean for Dirichlet distribution, maximize likelihood
+    for preicision a.k.a. s'''
     N, K = D.shape
     s1 = a0.sum()
     m = a0 / s1
@@ -178,7 +203,6 @@ def _fit_s(D, a0, logp, tol=1e-9, maxiter=100):
         s0 = s1
         g = psi(s1) - (m*psi(s1*m)).sum() + mlogp
         h = _trigamma(s1) - ((m**2)*_trigamma(s1*m)).sum()
-        success = False
 
         if g + s1 * h < 0:
             s1 = 1/(1/s0 + g/h/(s0**2))
@@ -199,6 +223,7 @@ def _fit_s(D, a0, logp, tol=1e-9, maxiter=100):
             .format(maxiter, s))
 
 def _fit_m(D, a0, logp, tol=1e-9, maxiter=1000):
+    '''With fixed precision s, maximize mean m'''
     N,K = D.shape
     s = a0.sum()
 
@@ -274,7 +299,6 @@ def _ipsi(y, tol=1.48e-9, maxiter=10):
     '''Inverse of psi (digamma) using Newton's method. For the purposes
     of Dirichlet MLE, since the parameters a[i] must always
     satisfy a > 0, we define ipsi :: R -> (0,inf).'''
-
     y = asanyarray(y, dtype='float')
     x0 = _piecewise(y, [y >= -2.22, y < -2.22],
             [(lambda x: exp(x) + 0.5), (lambda x: -1/(x+euler))])

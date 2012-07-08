@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-
+#
 # This file is subject to the terms and conditions defined in file
 # 'LICENSE.txt', which is part of this source code package.
 
@@ -11,7 +11,7 @@ setup(
     description='Calculates Dirichlet test',
     author='Eric Suh',
     author_email='contact@ericsuh.com',
-    packages=['dirichlet.py'],
+    py_modules=['dirichlet'],
     provides=['dirichlet'],
     install_requires = [
         'scipy >= 0.10.1',

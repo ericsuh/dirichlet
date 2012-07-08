@@ -5,10 +5,11 @@ from scipy.optimize import (fsolve)
 from numpy import (array, asanyarray, ones, arange, log, diag, vstack, exp)
 from numpy import (asarray, ndarray, zeros, isscalar)
 from numpy.linalg import norm
+import numpy as np
 
 euler = -1*psi(1) # Euler-Mascheroni constant
 
-def dirichlet(D1, D2, method='fixedpoint', maxiter=None):
+def dirichlet(D1, D2, method='meanprecision', maxiter=None):
     '''Test for statistical difference between observed proportions.
 
     Parameters
@@ -19,9 +20,9 @@ def dirichlet(D1, D2, method='fixedpoint', maxiter=None):
         the different levels or categorical possibilities. Each row of the
         matrices must add up to 1.
     method : string
-        One of ``'fixedpoint'``, ``'meanprecision'``, ``'newton'``;
-        designates method by which to find MLE Dirichlet distribution.
-        Default is ``'fixedpoint'``, and this is the only one implemented.
+        One of ``'fixedpoint'`` and ``'meanprecision'``, designates method by
+        which to find MLE Dirichlet distribution. Default is
+        ``'meanprecision'``, which is faster.
     maxiter : int
         Maximum number of iterations to take calculations. Default is
         ``sys.maxint``.
@@ -90,7 +91,7 @@ def loglikelihood(D, a):
     logp = log(D).mean(axis=0)
     return N*(gammaln(a.sum()) - gammaln(a).sum() + ((a - 1)*logp).sum())
 
-def dirichlet_mle(D, tol=1e-9, method='fixedpoint', maxiter=None):
+def dirichlet_mle(D, tol=1e-9, method='meanprecision', maxiter=None):
     '''Iteratively computes maximum likelihood Dirichlet distribution
     for an observed data set, i.e. a for which log p(D|a) is maximum.
 
@@ -104,9 +105,9 @@ def dirichlet_mle(D, tol=1e-9, method='fixedpoint', maxiter=None):
         If Euclidean distance between successive parameter arrays is less than
         ``tol``, calculation is taken to have converged.
     method : string
-        One of ``'fixedpoint'``, ``'meanprecision'``, ``'newton'``;
-        designates method by which to find MLE Dirichlet distribution.
-        Default is ``'fixedpoint'``, and this is the only one implemented.
+        One of ``'fixedpoint'`` and ``'meanprecision'``, designates method by
+        which to find MLE Dirichlet distribution. Default is
+        ``'meanprecision'``, which is faster.
     maxiter : int
         Maximum number of iterations to take calculations. Default is
         ``sys.maxint``.
@@ -164,6 +165,7 @@ def _meanprecision(D, tol=1e-9, maxiter=None):
         # if norm(a1-a0) < tol:
         if abs(loglikelihood(D, a1)-loglikelihood(D, a0)) < tol: # much faster
             return a1
+        a0 = a1
     raise Exception('Failed to converge after {} iterations, values are {}.'
                     .format(maxiter, a1))
 
@@ -200,7 +202,6 @@ def _fit_m(D, a0, logp, tol=1e-9, maxiter=1000):
     N,K = D.shape
     s = a0.sum()
 
-    a1 = a0
     for i in xrange(maxiter):
         m = a0 / s
         a1 = _ipsi(logp + (m*(psi(a0) - logp)).sum())

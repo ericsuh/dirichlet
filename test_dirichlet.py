@@ -16,8 +16,8 @@ class TestDirichlet:
     D0 = numpy.random.mtrand.dirichlet(a0, 1000)
     logl0 = dirichlet.loglikelihood(D0, a0)
 
-    D0p = numpy.random.mtrand.dirichlet(a0, 1000)
-    logl0p = dirichlet.loglikelihood(D0p, a0)
+    D0a = numpy.random.mtrand.dirichlet(a0, 1000)
+    logl0a = dirichlet.loglikelihood(D0a, a0)
 
     a1 = numpy.array([50, 50, 90])
     D1 = numpy.random.mtrand.dirichlet(a1, 1000)
@@ -27,15 +27,18 @@ class TestDirichlet:
     def test_mle(self, method):
         a0_fit = dirichlet.dirichlet_mle(self.D0, method=method)
         logl0_fit = dirichlet.loglikelihood(self.D0, a0_fit)
-        assert(norm(self.a0 - a0_fit)/norm(self.a0) < 0.05)
+        assert(norm(self.a0 - a0_fit)/norm(self.a0) < 0.1)
         assert(abs((logl0_fit - self.logl0)/logl0_fit) < 0.01)
 
-    def test_lltest(self):
-        D, p, a0_fit, a1_fit, a2_fit = dirichlet.dirichlet(D0, D0p)
-        assert(p > 0.05)
-        assert(norm(self.a0 - a0_fit)/norm(self.a0) < 0.05)
+    @pytest.mark.parametrize('method',['fixedpoint','meanprecision'])
+    def test_lltest(self, method):
+        D, p, a0_fit, a1_fit, a2_fit = dirichlet.dirichlet(self.D0, self.D0a,
+                method=method)
+        # assert(p > 0.05) Need to do a uniform KS-test for uniform p-values
+        assert(norm(self.a0 - a0_fit)/norm(self.a0) < 0.1)
 
-        D, p, a0_fit, a1_fit, a2_fit = dirichlet.dirichlet(D0, D1)
+        D, p, a0_fit, a1_fit, a2_fit = dirichlet.dirichlet(self.D0, self.D1,
+                method=method)
         assert(p < 0.05)
-        assert(norm(self.a0 - a1_fit)/norm(self.a0) < 0.05)
-        assert(norm(self.a1 - a2_fit)/norm(self.a1) < 0.05)
+        assert(norm(self.a0 - a1_fit)/norm(self.a0) < 0.1)
+        assert(norm(self.a1 - a2_fit)/norm(self.a1) < 0.1)

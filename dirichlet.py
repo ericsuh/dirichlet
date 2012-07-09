@@ -16,6 +16,7 @@ distribution". See the following URL for more information:
 
 import sys
 import scipy as sp
+import scipy.stats as stats
 from scipy.special import (psi, polygamma, gammaln)
 from numpy import (array, asanyarray, ones, arange, log, diag, vstack, exp,
         asarray, ndarray, zeros, isscalar)
@@ -73,7 +74,7 @@ def dirichlet(D1, D2, method='meanprecision', maxiter=None):
 
     D = 2 * (loglikelihood(D1, a1) + loglikelihood(D2, a2)
          - loglikelihood(D0, a0))
-    return (D, sp.stats.chi2.sf(D, K1), a0, a1, a2)
+    return (D, stats.chi2.sf(D, K1), a0, a1, a2)
 
 def meanprecision(a):
     '''Mean and precision of Dirichlet distribution.

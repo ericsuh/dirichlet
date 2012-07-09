@@ -17,15 +17,16 @@ def test_ipsi():
     assert(norm(dirichlet._ipsi(psi(x_input))-x_input) < TOL*len(x_input))
 
 class TestDirichlet:
+    numpy.random.seed(129875290473)
     a0 = numpy.array([100, 299, 100])
-    D0 = numpy.random.mtrand.dirichlet(a0, 1000)
+    D0 = numpy.random.dirichlet(a0, 1000)
     logl0 = dirichlet.loglikelihood(D0, a0)
 
-    D0a = numpy.random.mtrand.dirichlet(a0, 1000)
+    D0a = numpy.random.dirichlet(a0, 1000)
     logl0a = dirichlet.loglikelihood(D0a, a0)
 
     a1 = numpy.array([50, 50, 90])
-    D1 = numpy.random.mtrand.dirichlet(a1, 1000)
+    D1 = numpy.random.dirichlet(a1, 1000)
     logl1 = dirichlet.loglikelihood(D1, a1)
 
     @pytest.mark.parametrize('method',['fixedpoint','meanprecision'])

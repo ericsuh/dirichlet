@@ -25,15 +25,16 @@ import numpy as np
 import simplex
 
 __all__ = [
-    'dirichlet',
-    'dirichlet_mle',
+    'pdf',
+    'test',
+    'mle',
     'meanprecision',
     'loglikelihood',
 ]
 
 euler = -1*psi(1) # Euler-Mascheroni constant
 
-def dirichlet(D1, D2, method='meanprecision', maxiter=None):
+def test(D1, D2, method='meanprecision', maxiter=None):
     '''Test for statistical difference between observed proportions.
 
     Parameters
@@ -69,15 +70,15 @@ def dirichlet(D1, D2, method='meanprecision', maxiter=None):
         raise Exception("D1 and D2 must have the same number of columns")
 
     D0 = vstack((D1, D2))
-    a0 = dirichlet_mle(D0, method=method, maxiter=maxiter)
-    a1 = dirichlet_mle(D1, method=method, maxiter=maxiter)
-    a2 = dirichlet_mle(D2, method=method, maxiter=maxiter)
+    a0 = mle(D0, method=method, maxiter=maxiter)
+    a1 = mle(D1, method=method, maxiter=maxiter)
+    a2 = mle(D2, method=method, maxiter=maxiter)
 
     D = 2 * (loglikelihood(D1, a1) + loglikelihood(D2, a2)
          - loglikelihood(D0, a0))
     return (D, stats.chi2.sf(D, K1), a0, a1, a2)
 
-def dirichletpdf(alphas):
+def pdf(alphas):
     '''Returns a Dirichlet PDF function'''
     alphap = alphas - 1
     c = np.exp(gammaln(alphas.sum()) - gammaln(alphas).sum())
@@ -124,7 +125,7 @@ def loglikelihood(D, a):
     logp = log(D).mean(axis=0)
     return N*(gammaln(a.sum()) - gammaln(a).sum() + ((a - 1)*logp).sum())
 
-def dirichlet_mle(D, tol=1e-9, method='meanprecision', maxiter=None):
+def mle(D, tol=1e-9, method='meanprecision', maxiter=None):
     '''Iteratively computes maximum likelihood Dirichlet distribution
     for an observed data set, i.e. a for which log p(D|a) is maximum.
 

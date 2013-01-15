@@ -22,6 +22,7 @@ from numpy import (array, asanyarray, ones, arange, log, diag, vstack, exp,
         asarray, ndarray, zeros, isscalar)
 from numpy.linalg import norm
 import numpy as np
+import simplex
 
 __all__ = [
     'dirichlet',
@@ -75,6 +76,15 @@ def dirichlet(D1, D2, method='meanprecision', maxiter=None):
     D = 2 * (loglikelihood(D1, a1) + loglikelihood(D2, a2)
          - loglikelihood(D0, a0))
     return (D, stats.chi2.sf(D, K1), a0, a1, a2)
+
+def dirichletpdf(alphas):
+    '''Returns a Dirichlet PDF function'''
+    alphap = alphas - 1
+    c = np.exp(gammaln(alphas.sum()) - gammaln(alphas).sum())
+    def dirichlet(xs):
+        '''N x K array'''
+        return c * (xs**alphap).prod(axis=1)
+    return dirichlet
 
 def meanprecision(a):
     '''Mean and precision of Dirichlet distribution.

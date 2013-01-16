@@ -8,7 +8,7 @@ from setuptools import setup, find_packages
 setup(
     name='dirichlet',
     version='0.5',
-    description='Calculates Dirichlet test',
+    description='Calculates Dirichlet test and plots 2-simplex Dirichlets',
     author='Eric Suh',
     author_email='contact@ericsuh.com',
     py_modules=['dirichlet'],
@@ -16,6 +16,7 @@ setup(
     install_requires = [
         'scipy >= 0.10.1',
         'numpy >= 1.7.0',
+        'matplotlib >= 1.2.0',
     ],
     url='http://github.com/ericsuh/dirichlet',
     download_url='https://github.com/ericsuh/dirichlet/zipball/master',
@@ -36,5 +37,8 @@ Calculates nested model Dirichlet test of independence by finding maximum
 likelihood estimates of Dirichlet distributions for different data sets
 and comparing to the null hypothesis of the data being derived from one
 distribution.
+
+In addition, ``dirichlet.simplex`` module creates scatter, contour, and filled
+contour 2-simplex plots.
 """
 )

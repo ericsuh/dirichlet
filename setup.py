@@ -7,15 +7,14 @@ from setuptools import setup, find_packages
 
 setup(
     name='dirichlet',
-    version='0.5',
+    version='0.7',
     description='Calculates Dirichlet test and plots 2-simplex Dirichlets',
     author='Eric Suh',
     author_email='contact@ericsuh.com',
-    py_modules=['dirichlet'],
-    provides=['dirichlet'],
+    packages=['dirichlet'],
     install_requires = [
         'scipy >= 0.10.1',
-        'numpy >= 1.7.0',
+        'numpy >= 1.6.2',
         'matplotlib >= 1.2.0',
     ],
     url='http://github.com/ericsuh/dirichlet',

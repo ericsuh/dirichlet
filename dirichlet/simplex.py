@@ -109,7 +109,7 @@ def _contour(f, vertexlabels=None, contourfunc=None, **kwargs):
     points2d = points2d[np.where(valid),:][0]
     points3d = points3d[np.where(valid),:][0]
     z = f(points3d)
-    contourf(points2d[:,0], points2d[:,1], z, **kwargs)
+    contourfunc(points2d[:,0], points2d[:,1], z, **kwargs)
     _draw_axes(vertexlabels)
     return plt.gcf()
 

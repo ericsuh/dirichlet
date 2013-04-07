@@ -125,7 +125,7 @@ def loglikelihood(D, a):
     logp = log(D).mean(axis=0)
     return N*(gammaln(a.sum()) - gammaln(a).sum() + ((a - 1)*logp).sum())
 
-def mle(D, tol=1e-9, method='meanprecision', maxiter=None):
+def mle(D, tol=1e-7, method='meanprecision', maxiter=None):
     '''Iteratively computes maximum likelihood Dirichlet distribution
     for an observed data set, i.e. a for which log p(D|a) is maximum.
 
@@ -156,7 +156,7 @@ def mle(D, tol=1e-9, method='meanprecision', maxiter=None):
     else:
         return _fixedpoint(D, tol=tol, maxiter=maxiter)
 
-def _fixedpoint(D, tol=1e-9, maxiter=None):
+def _fixedpoint(D, tol=1e-7, maxiter=None):
     '''Simple fixed point iteration method for MLE of Dirichlet distribution'''
     N, K = D.shape
     logp = log(D).mean(axis=0)
@@ -174,7 +174,7 @@ def _fixedpoint(D, tol=1e-9, maxiter=None):
     raise Exception('Failed to converge after {} iterations, values are {}.'
                     .format(maxiter, a1))
 
-def _meanprecision(D, tol=1e-9, maxiter=None):
+def _meanprecision(D, tol=1e-7, maxiter=None):
     '''Mean and precision alternating method for MLE of Dirichlet
     distribution'''
     N, K = D.shape
@@ -193,9 +193,9 @@ def _meanprecision(D, tol=1e-9, maxiter=None):
     if maxiter is None:
         maxiter = sys.maxint
     for i in xrange(maxiter):
-        a1 = _fit_s(D, a0, logp)
+        a1 = _fit_s(D, a0, logp, tol=tol)
         s1 = sum(a1)
-        a1 = _fit_m(D, a1, logp)
+        a1 = _fit_m(D, a1, logp, tol=tol)
         m = a1/s1
         # if norm(a1-a0) < tol:
         if abs(loglikelihood(D, a1)-loglikelihood(D, a0)) < tol: # much faster
@@ -204,7 +204,7 @@ def _meanprecision(D, tol=1e-9, maxiter=None):
     raise Exception('Failed to converge after {} iterations, values are {}.'
                     .format(maxiter, a1))
 
-def _fit_s(D, a0, logp, tol=1e-9, maxiter=100):
+def _fit_s(D, a0, logp, tol=1e-7, maxiter=1000):
     '''Assuming a fixed mean for Dirichlet distribution, maximize likelihood
     for preicision a.k.a. s'''
     N, K = D.shape
@@ -232,9 +232,9 @@ def _fit_s(D, a0, logp, tol=1e-9, maxiter=100):
             return a
 
     raise Exception('Failed to converge after {} iterations, s is {}'
-            .format(maxiter, s))
+            .format(maxiter, s1))
 
-def _fit_m(D, a0, logp, tol=1e-9, maxiter=1000):
+def _fit_m(D, a0, logp, tol=1e-7, maxiter=1000):
     '''With fixed precision s, maximize mean m'''
     N,K = D.shape
     s = a0.sum()

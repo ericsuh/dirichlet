@@ -22,7 +22,21 @@ from numpy import (array, asanyarray, ones, arange, log, diag, vstack, exp,
         asarray, ndarray, zeros, isscalar)
 from numpy.linalg import norm
 import numpy as np
-import simplex
+from . import simplex
+
+try:
+    # python 2
+    MAXINT = sys.maxint
+except AttributeError:
+    # python 3
+    MAXINT = sys.maxsize
+
+try:
+    # python 2
+    xrange
+except NameError:
+    # python 3
+    xrange = range
 
 __all__ = [
     'pdf',
@@ -164,7 +178,7 @@ def _fixedpoint(D, tol=1e-7, maxiter=None):
 
     # Start updating
     if maxiter is None:
-        maxiter = sys.maxint
+        maxiter = MAXINT
     for i in xrange(maxiter):
         a1 = _ipsi(psi(a0.sum()) + logp)
         # if norm(a1-a0) < tol:
@@ -191,7 +205,7 @@ def _meanprecision(D, tol=1e-7, maxiter=None):
 
     # Start updating
     if maxiter is None:
-        maxiter = sys.maxint
+        maxiter = MAXINT
     for i in xrange(maxiter):
         a1 = _fit_s(D, a0, logp, tol=tol)
         s1 = sum(a1)

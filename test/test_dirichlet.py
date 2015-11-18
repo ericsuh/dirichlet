@@ -22,7 +22,8 @@ def test_ipsi():
            < TOL*len(x_input))
 
 class TestDirichlet:
-    numpy.random.seed(129875290473)
+    # seed must be convertible to 32 bit unsigned integers
+    numpy.random.seed(12987529)
     a0 = numpy.array([100, 299, 100])
     D0 = numpy.random.dirichlet(a0, 1000)
     logl0 = dirichlet.loglikelihood(D0, a0)

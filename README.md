@@ -20,6 +20,14 @@ Dirichlet-distributed data sets are likely to be from the same distribution
 or from two different ones, much like a chi-square or G-test for independence,
 but with Dirichlet models.
 
+Caveats
+-------
+
+Note that this package at the moment doesn't support sparse data vectors due to the
+numerical fitting algorithm that uses the gamma function. Possibly some sort of
+[additive smoothing](https://en.wikipedia.org/wiki/Additive_smoothing) would
+make this package work in your context, but that will depend on your application.
+
 Installation
 ------------
 

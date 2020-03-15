@@ -205,7 +205,7 @@ def _meanprecision(D, tol=1e-7, maxiter=None):
         a0 = a0 / s0
         s0 = 1
     elif s0 == 0:
-        a0 = ones(a.shape) / len(a)
+        a0 = ones(a0.shape) / len(a0)
         s0 = 1
     m0 = a0 / s0
 
@@ -270,7 +270,7 @@ def _fit_m(D, a0, logp, tol=1e-7, maxiter=1000):
             return a1
         a0 = a1
 
-    raise Exception(f"Failed to converge after {maxiter} iterations, " f"s is {s1}")
+    raise Exception(f"Failed to converge after {maxiter} iterations, " f"s is {s}")
 
 
 def _init_a(D):

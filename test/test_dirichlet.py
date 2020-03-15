@@ -16,6 +16,9 @@ import dirichlet
 TOL = 1.48e-8
 
 def test_ipsi():
+    """
+    Note, this will fail if using np.piecewise for numpy < 1.9.0
+    """
     x_input = numpy.logspace(-5, 5)
     assert(dirichlet.dirichlet._ipsi(psi(0.01)) - 0.01 < TOL)
     assert(norm(dirichlet.dirichlet._ipsi(psi(x_input))-x_input)

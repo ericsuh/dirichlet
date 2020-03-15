@@ -266,7 +266,13 @@ def _fit_m(D, a0, logp, tol=1e-7, maxiter=1000):
             .format(maxiter, s))
 
 def _piecewise(x, condlist, funclist, *args, **kw):
-    '''Fixed version of numpy.piecewise for 0-d arrays'''
+    '''Fixed version of numpy.piecewise for 0-d arrays
+
+    This version is necessary for any version of numpy < 1.9.0.
+
+    The test `tests/test_dirichlet.py:test_ipsi` will fail if using
+    the version of numpy.piecewise is incorrect.
+    '''
     x = asanyarray(x)
     n2 = len(funclist)
     if isscalar(condlist) or \

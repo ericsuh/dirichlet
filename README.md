@@ -46,7 +46,20 @@ Development
 
 *Note*: These instructions have only been tested on Ubuntu/Debian.
 
-To run tests, generally you can just run:
+Dev dependencies are listed in `requirements-dev.txt`. You can install them
+with:
+
+    pip install -r requirements-dev.txt
+
+### Code style
+
+Please use [`black`](https://black.readthedocs.io/) to format your code when contributing
+
+### Testing
+
+This project uses [`tox`](https://tox.readthedocs.io/) and
+[`pytest`](https://pytest.readthedocs.io/) for testing. To run tests,
+generally you can just run:
 
     tox
 

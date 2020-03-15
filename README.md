@@ -20,6 +20,11 @@ Dirichlet-distributed data sets are likely to be from the same distribution
 or from two different ones, much like a chi-square or G-test for independence,
 but with Dirichlet models.
 
+Simplex Plots
+-------------
+
+The `dirichlet.simplex` module creates scatter, contour, and filled contour 2-simplex plots.
+
 Caveats
 -------
 
@@ -32,3 +37,5 @@ Installation
 ------------
 
     pip install git+https://github.com/ericsuh/dirichlet.git
+
+Note: this has only been tested with Python 2.7+ and Python 3.6+. Other versions may work, but they haven't been tested.

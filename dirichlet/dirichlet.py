@@ -1,8 +1,3 @@
-# Copyright (C) 2012 Eric J. Suh
-#
-# This file is subject to the terms and conditions defined in file
-# 'LICENSE.txt', which is part of this source code package.
-
 '''Dirichlet.py
 
 Maximum likelihood estimation and likelihood ratio tests of Dirichlet

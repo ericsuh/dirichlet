@@ -57,14 +57,21 @@ def barycentric(points):
 def scatter(points, vertexlabels=None, **kwargs):
     """Scatter plot of barycentric 2-simplex points on a 2D triangle.
 
-    :param points: Points on a 2-simplex.
-    :type points: N x 3 list or ndarray.
-    :param vertexlabels: Labels for corners of plot in the order
+    Parameters
+    ----------
+    points : (N, 3) shape array
+        N points on a 2-simplex
+    vertexlabels : (str, str, str)
+        Labels for corners of the plot, in the order
         ``(a, b, c)`` where ``a == (1,0,0)``, ``b == (0,1,0)``,
         ``c == (0,0,1)``.
-    :type vertexlabels: 3-tuple of strings.
-    :param **kwargs: Arguments to :func:`plt.scatter`.
-    :type **kwargs: keyword arguments."""
+    **kwargs : any
+        Arguments to :func:`plt.scatter`.
+    
+    Returns
+    -------
+    matplotlib.figure.Figure
+        The drawn simplex plot figure."""
     if vertexlabels is None:
         vertexlabels = ("1", "2", "3")
 
@@ -79,14 +86,21 @@ def contour(f, vertexlabels=None, **kwargs):
     """Contour line plot on a 2D triangle of a function evaluated at
     barycentric 2-simplex points.
 
-    :param f: Function to evaluate on N x 3 ndarray of coordinates
-    :type f: ``ufunc``
-    :param vertexlabels: Labels for corners of plot in the order
+    Parameters
+    ----------
+    f : function
+        Function to evaluate on (N, 3) ndarray of coordinates
+    vertexlabels : (str, str, str)
+        Labels for corners of the plot, in the order
         ``(a, b, c)`` where ``a == (1,0,0)``, ``b == (0,1,0)``,
         ``c == (0,0,1)``.
-    :type vertexlabels: 3-tuple of strings.
-    :param **kwargs: Arguments to :func:`plt.tricontour`.
-    :type **kwargs: keyword arguments."""
+    **kwargs : any
+        Arguments to :func:`plt.tricontour`.
+        
+    Returns
+    -------
+    matplotlib.figure.Figure
+        The drawn contour line plot figure."""
     return _contour(f, vertexlabels, contourfunc=plt.tricontour, **kwargs)
 
 

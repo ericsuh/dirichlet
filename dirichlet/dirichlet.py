@@ -24,19 +24,7 @@ from numpy.linalg import norm
 import numpy as np
 from . import simplex
 
-try:
-    # python 2
-    MAXINT = sys.maxint
-except AttributeError:
-    # python 3
-    MAXINT = sys.maxsize
-
-try:
-    # python 2
-    xrange
-except NameError:
-    # python 3
-    xrange = range
+MAXINT = sys.maxsize
 
 __all__ = [
     'pdf',
@@ -179,7 +167,7 @@ def _fixedpoint(D, tol=1e-7, maxiter=None):
     # Start updating
     if maxiter is None:
         maxiter = MAXINT
-    for i in xrange(maxiter):
+    for i in range(maxiter):
         a1 = _ipsi(psi(a0.sum()) + logp)
         # if norm(a1-a0) < tol:
         if abs(loglikelihood(D, a1)-loglikelihood(D, a0)) < tol: # much faster
@@ -206,7 +194,7 @@ def _meanprecision(D, tol=1e-7, maxiter=None):
     # Start updating
     if maxiter is None:
         maxiter = MAXINT
-    for i in xrange(maxiter):
+    for i in range(maxiter):
         a1 = _fit_s(D, a0, logp, tol=tol)
         s1 = sum(a1)
         a1 = _fit_m(D, a1, logp, tol=tol)
@@ -215,8 +203,8 @@ def _meanprecision(D, tol=1e-7, maxiter=None):
         if abs(loglikelihood(D, a1)-loglikelihood(D, a0)) < tol: # much faster
             return a1
         a0 = a1
-    raise Exception('Failed to converge after {} iterations, values are {}.'
-                    .format(maxiter, a1))
+    raise Exception(f'Failed to converge after {maxiter} iterations, '
+                    f'values are {a1}.')
 
 def _fit_s(D, a0, logp, tol=1e-7, maxiter=1000):
     '''Assuming a fixed mean for Dirichlet distribution, maximize likelihood
@@ -225,7 +213,7 @@ def _fit_s(D, a0, logp, tol=1e-7, maxiter=1000):
     s1 = a0.sum()
     m = a0 / s1
     mlogp = (m*logp).sum()
-    for i in xrange(maxiter):
+    for i in range(maxiter):
         s0 = s1
         g = psi(s1) - (m*psi(s1*m)).sum() + mlogp
         h = _trigamma(s1) - ((m**2)*_trigamma(s1*m)).sum()
@@ -239,21 +227,21 @@ def _fit_s(D, a0, logp, tol=1e-7, maxiter=1000):
         if s1 <= 0:
             s1 = s0 - g/h # Newton
         if s1 <= 0:
-            raise Exception('Unable to update s from {}'.format(s0))
+            raise Exception(f'Unable to update s from {s0}')
 
         a = s1 * m
         if abs(s1 - s0) < tol:
             return a
 
-    raise Exception('Failed to converge after {} iterations, s is {}'
-            .format(maxiter, s1))
+    raise Exception(f'Failed to converge after {maxiter} iterations, '
+                    f's is {s1}')
 
 def _fit_m(D, a0, logp, tol=1e-7, maxiter=1000):
     '''With fixed precision s, maximize mean m'''
     N,K = D.shape
     s = a0.sum()
 
-    for i in xrange(maxiter):
+    for i in range(maxiter):
         m = a0 / s
         a1 = _ipsi(logp + (m*(psi(a0) - logp)).sum())
         a1 = a1/a1.sum() * s
@@ -262,64 +250,8 @@ def _fit_m(D, a0, logp, tol=1e-7, maxiter=1000):
             return a1
         a0 = a1
 
-    raise Exception('Failed to converge after {} iterations, s is {}'
-            .format(maxiter, s))
-
-def _piecewise(x, condlist, funclist, *args, **kw):
-    '''Fixed version of numpy.piecewise for 0-d arrays
-
-    This version is necessary for any version of numpy < 1.9.0.
-
-    The test `tests/test_dirichlet.py:test_ipsi` will fail if using
-    the version of numpy.piecewise is incorrect.
-    '''
-    x = asanyarray(x)
-    n2 = len(funclist)
-    if isscalar(condlist) or \
-            (isinstance(condlist, np.ndarray) and condlist.ndim == 0) or \
-            (x.ndim > 0 and condlist[0].ndim == 0):
-        condlist = [condlist]
-    condlist = [asarray(c, dtype=bool) for c in condlist]
-    n = len(condlist)
-
-    zerod = False
-    # This is a hack to work around problems with NumPy's
-    #  handling of 0-d arrays and boolean indexing with
-    #  numpy.bool_ scalars
-    if x.ndim == 0:
-        x = x[None]
-        zerod = True
-        newcondlist = []
-        for k in range(n):
-            if condlist[k].ndim == 0:
-                condition = condlist[k][None]
-            else:
-                condition = condlist[k]
-            newcondlist.append(condition)
-        condlist = newcondlist
-
-    if n == n2-1:  # compute the "otherwise" condition.
-        totlist = condlist[0]
-        for k in range(1, n):
-            totlist |= condlist[k]
-        condlist.append(~totlist)
-        n += 1
-    if (n != n2):
-        raise ValueError(
-                "function list and condition list must be the same")
-
-    y = zeros(x.shape, x.dtype)
-    for k in range(n):
-        item = funclist[k]
-        if not callable(item):
-            y[condlist[k]] = item
-        else:
-            vals = x[condlist[k]]
-            if vals.size > 0:
-                y[condlist[k]] = item(vals, *args, **kw)
-    if zerod:
-        y = y.squeeze()
-    return y
+    raise Exception(f'Failed to converge after {maxiter} iterations, '
+                    f's is {s1}')
 
 def _init_a(D):
     '''Initial guess for Dirichlet alpha parameters given data D'''
@@ -332,15 +264,15 @@ def _ipsi(y, tol=1.48e-9, maxiter=10):
     of Dirichlet MLE, since the parameters a[i] must always
     satisfy a > 0, we define ipsi :: R -> (0,inf).'''
     y = asanyarray(y, dtype='float')
-    x0 = _piecewise(y, [y >= -2.22, y < -2.22],
+    x0 = np.piecewise(y, [y >= -2.22, y < -2.22],
             [(lambda x: exp(x) + 0.5), (lambda x: -1/(x+euler))])
-    for i in xrange(maxiter):
+    for i in range(maxiter):
         x1 = x0 - (psi(x0) - y)/_trigamma(x0)
         if norm(x1 - x0) < tol:
             return x1
         x0 = x1
-    raise Exception(
-        'Unable to converge in {} iterations, value is {}'.format(maxiter, x1))
+    raise Exception(f'Failed to converge after {maxiter} iterations, '
+                    f'value is {x1}')
 
 def _trigamma(x):
     return polygamma(1, x)

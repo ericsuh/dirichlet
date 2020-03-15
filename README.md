@@ -38,13 +38,8 @@ Installation
 
     pip install git+https://github.com/ericsuh/dirichlet.git
 
-Note: this has only been tested with Python 2.7+ and Python 3.6+. Other versions
-may work, but they haven't been tested.
-
-The v0.8.0 series will be the last version to support Python 2.7, since the latest
-versions of all of the dependencies have dropped support for Python 2. v0.8.0
-should be compatible with the last versions of each of `scipy`, `numpy`, and
-`matplotlib` that support Python 2.
+This has only been tested with Python 3.6+. Other versions may work, but they
+haven't been tested.
 
 Development
 -----------
@@ -55,18 +50,5 @@ To run tests, generally you can just run:
 
     tox
 
-There are three different test environments:
-
-- `py27-oldest`: Python 2.7 with the oldest supported dependencies
-- `py27-newest`: Python 2.7 with the newest supported dependencies
-- `py36`: Python 3.6 with the newest supported dependencies
-
-You can run e.g. `py27-oldest` with:
-
-    tox -e py27-oldest
-
 To test a particular version of Python, you will need to have it
-installed and in your `$PATH` ahead of time. To build dependencies
-for `tox -e p27-oldest`, you will also have to ensure that Tkinter
-and Freetype has been installed. `py27-oldest-prebuild.sh` will
-install those on Ubuntu/Debian.
+installed and in your `$PATH` ahead of time.

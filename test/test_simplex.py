@@ -4,11 +4,9 @@
 '''Tests for the functions in the Simplex module.'''
 
 import sys
-import os.path
 import numpy as np
 import numpy.linalg
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 from dirichlet import simplex
 
 TOL = 1.48e-8

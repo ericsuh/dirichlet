@@ -13,19 +13,28 @@ __all__ = [
 
 def cartesian(points):
     """Converts array of barycentric coordinates on a 2-simplex to an array of
-    Cartesian coordinates on a 2D triangle in the first quadrant, i.e.::
+    Cartesian coordinates on a 2D triangle in the first quadrant.
 
-        >>> cartesian((1,0,0))
-        array([0, 0])
-        >>> cartesian((0,1,0))
-        array([0, 1])
-        >>> cartesian((0,0,1))
-        array([0.5, 0.8660254037844386]) # == [0.5, sqrt(3)/2]
+    Parameters
+    ----------
+    points : (N, 3) shape array
+        Points on a 2-simplex.
 
-    :param points: Points on a 2-simplex.
-    :type points: N x 3 list or ndarray.
-    :returns: Cartesian coordinate points.
-    :rtype: N x 2 ndarray."""
+    Returns
+    -------
+    (N, 2) shape array
+        Cartesian coordinate points.
+
+    Examples
+    --------
+    >>> cartesian((1,0,0))
+    array([0, 0])
+
+    >>> cartesian((0,1,0))
+    array([0, 1])
+
+    >>> cartesian((0,0,1))
+    array([0.5, 0.8660254037844386]) # == [0.5, sqrt(3)/2]"""
     points = np.asanyarray(points)
     ndim = points.ndim  # will use this to have similar output shape to input
     if ndim == 1:
@@ -114,8 +123,12 @@ def contourf(f, vertexlabels=None, **kwargs):
 
 
 def _contour(f, vertexlabels=None, contourfunc=None, **kwargs):
-    """Workhorse function for the above, where ``contourfunc`` is the contour
-    plotting function to use for actual plotting."""
+    """Workhorse function for ``contour`` and ``contourf``.
+
+    Parameters
+    ----------
+    contourfunc : function
+        The contour plotting function to use for actual plotting."""
 
     if contourfunc is None:
         contourfunc = plt.tricontour

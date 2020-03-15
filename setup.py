@@ -20,7 +20,7 @@ setup(
     author="Eric Suh",
     author_email="contact@ericsuh.com",
     packages=["dirichlet"],
-    install_requires = install_requires,
+    install_requires=install_requires,
     url="http://github.com/ericsuh/dirichlet",
     download_url="https://github.com/ericsuh/dirichlet/zipball/master",
     classifiers=[
@@ -34,7 +34,6 @@ setup(
         "Topic :: Scientific/Engineering",
         "Topic :: Scientific/Engineering :: Information Analysis",
     ],
-
     long_description="""\
 Dirichlet Test
 --------------
@@ -46,5 +45,5 @@ distribution.
 
 In addition, ``dirichlet.simplex`` module creates scatter, contour, and filled
 contour 2-simplex plots.
-"""
+""",
 )

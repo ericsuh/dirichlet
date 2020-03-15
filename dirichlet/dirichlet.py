@@ -1,4 +1,4 @@
-'''Dirichlet.py
+"""Dirichlet.py
 
 Maximum likelihood estimation and likelihood ratio tests of Dirichlet
 distribution models of data.
@@ -7,32 +7,47 @@ Most of this package is a port of Thomas P. Minka's wonderful Fastfit MATLAB
 code. Much thanks to him for that and his clear paper "Estimating a Dirichlet
 distribution". See the following URL for more information:
 
-    http://research.microsoft.com/en-us/um/people/minka/'''
+    http://research.microsoft.com/en-us/um/people/minka/"""
 
 import sys
+
+import numpy as np
 import scipy as sp
 import scipy.stats as stats
-from scipy.special import (psi, polygamma, gammaln)
-from numpy import (array, asanyarray, ones, arange, log, diag, vstack, exp,
-        asarray, ndarray, zeros, isscalar)
+from numpy import (
+    arange,
+    array,
+    asanyarray,
+    asarray,
+    diag,
+    exp,
+    isscalar,
+    log,
+    ndarray,
+    ones,
+    vstack,
+    zeros,
+)
 from numpy.linalg import norm
-import numpy as np
+from scipy.special import gammaln, polygamma, psi
+
 from . import simplex
 
 MAXINT = sys.maxsize
 
 __all__ = [
-    'pdf',
-    'test',
-    'mle',
-    'meanprecision',
-    'loglikelihood',
+    "loglikelihood",
+    "meanprecision",
+    "mle",
+    "pdf",
+    "test",
 ]
 
-euler = -1*psi(1) # Euler-Mascheroni constant
+euler = -1 * psi(1)  # Euler-Mascheroni constant
 
-def test(D1, D2, method='meanprecision', maxiter=None):
-    '''Test for statistical difference between observed proportions.
+
+def test(D1, D2, method="meanprecision", maxiter=None):
+    """Test for statistical difference between observed proportions.
 
     Parameters
     ----------
@@ -59,7 +74,7 @@ def test(D1, D2, method='meanprecision', maxiter=None):
     a1 : array
     a2 : array
         MLE parameters for the Dirichlet distributions fit to 
-        ``D1`` and ``D2`` together, ``D1``, and ``D2``, respectively.'''
+        ``D1`` and ``D2`` together, ``D1``, and ``D2``, respectively."""
 
     N1, K1 = D1.shape
     N2, K2 = D2.shape
@@ -71,21 +86,24 @@ def test(D1, D2, method='meanprecision', maxiter=None):
     a1 = mle(D1, method=method, maxiter=maxiter)
     a2 = mle(D2, method=method, maxiter=maxiter)
 
-    D = 2 * (loglikelihood(D1, a1) + loglikelihood(D2, a2)
-         - loglikelihood(D0, a0))
+    D = 2 * (loglikelihood(D1, a1) + loglikelihood(D2, a2) - loglikelihood(D0, a0))
     return (D, stats.chi2.sf(D, K1), a0, a1, a2)
 
+
 def pdf(alphas):
-    '''Returns a Dirichlet PDF function'''
+    """Returns a Dirichlet PDF function"""
     alphap = alphas - 1
     c = np.exp(gammaln(alphas.sum()) - gammaln(alphas).sum())
+
     def dirichlet(xs):
-        '''N x K array'''
-        return c * (xs**alphap).prod(axis=1)
+        """N x K array"""
+        return c * (xs ** alphap).prod(axis=1)
+
     return dirichlet
 
+
 def meanprecision(a):
-    '''Mean and precision of Dirichlet distribution.
+    """Mean and precision of Dirichlet distribution.
 
     Parameters
     ----------
@@ -97,14 +115,15 @@ def meanprecision(a):
     mean : array
         Numbers [0,1] of the means of the Dirichlet distribution.
     precision : float
-        Precision or concentration parameter of the Dirichlet distribution.'''
+        Precision or concentration parameter of the Dirichlet distribution."""
 
     s = a.sum()
     m = a / s
-    return (m,s)
+    return (m, s)
+
 
 def loglikelihood(D, a):
-    '''Compute log likelihood of Dirichlet distribution, i.e. log p(D|a).
+    """Compute log likelihood of Dirichlet distribution, i.e. log p(D|a).
 
     Parameters
     ----------
@@ -117,13 +136,14 @@ def loglikelihood(D, a):
     Returns
     -------
     logl : float
-        The log likelihood of the Dirichlet distribution'''
+        The log likelihood of the Dirichlet distribution"""
     N, K = D.shape
     logp = log(D).mean(axis=0)
-    return N*(gammaln(a.sum()) - gammaln(a).sum() + ((a - 1)*logp).sum())
+    return N * (gammaln(a.sum()) - gammaln(a).sum() + ((a - 1) * logp).sum())
 
-def mle(D, tol=1e-7, method='meanprecision', maxiter=None):
-    '''Iteratively computes maximum likelihood Dirichlet distribution
+
+def mle(D, tol=1e-7, method="meanprecision", maxiter=None):
+    """Iteratively computes maximum likelihood Dirichlet distribution
     for an observed data set, i.e. a for which log p(D|a) is maximum.
 
     Parameters
@@ -146,15 +166,16 @@ def mle(D, tol=1e-7, method='meanprecision', maxiter=None):
     Returns
     -------
     a : array
-        Maximum likelihood parameters for Dirichlet distribution.'''
+        Maximum likelihood parameters for Dirichlet distribution."""
 
-    if method == 'meanprecision':
+    if method == "meanprecision":
         return _meanprecision(D, tol=tol, maxiter=maxiter)
     else:
         return _fixedpoint(D, tol=tol, maxiter=maxiter)
 
+
 def _fixedpoint(D, tol=1e-7, maxiter=None):
-    '''Simple fixed point iteration method for MLE of Dirichlet distribution'''
+    """Simple fixed point iteration method for MLE of Dirichlet distribution"""
     N, K = D.shape
     logp = log(D).mean(axis=0)
     a0 = _init_a(D)
@@ -165,26 +186,28 @@ def _fixedpoint(D, tol=1e-7, maxiter=None):
     for i in range(maxiter):
         a1 = _ipsi(psi(a0.sum()) + logp)
         # if norm(a1-a0) < tol:
-        if abs(loglikelihood(D, a1)-loglikelihood(D, a0)) < tol: # much faster
+        if abs(loglikelihood(D, a1) - loglikelihood(D, a0)) < tol:  # much faster
             return a1
         a0 = a1
-    raise Exception('Failed to converge after {} iterations, values are {}.'
-                    .format(maxiter, a1))
+    raise Exception(
+        "Failed to converge after {} iterations, values are {}.".format(maxiter, a1)
+    )
+
 
 def _meanprecision(D, tol=1e-7, maxiter=None):
-    '''Mean and precision alternating method for MLE of Dirichlet
-    distribution'''
+    """Mean and precision alternating method for MLE of Dirichlet
+    distribution"""
     N, K = D.shape
     logp = log(D).mean(axis=0)
     a0 = _init_a(D)
     s0 = a0.sum()
     if s0 < 0:
-        a0 = a0/s0
+        a0 = a0 / s0
         s0 = 1
     elif s0 == 0:
         a0 = ones(a.shape) / len(a)
         s0 = 1
-    m0 = a0/s0
+    m0 = a0 / s0
 
     # Start updating
     if maxiter is None:
@@ -193,81 +216,87 @@ def _meanprecision(D, tol=1e-7, maxiter=None):
         a1 = _fit_s(D, a0, logp, tol=tol)
         s1 = sum(a1)
         a1 = _fit_m(D, a1, logp, tol=tol)
-        m = a1/s1
+        m = a1 / s1
         # if norm(a1-a0) < tol:
-        if abs(loglikelihood(D, a1)-loglikelihood(D, a0)) < tol: # much faster
+        if abs(loglikelihood(D, a1) - loglikelihood(D, a0)) < tol:  # much faster
             return a1
         a0 = a1
-    raise Exception(f'Failed to converge after {maxiter} iterations, '
-                    f'values are {a1}.')
+    raise Exception(
+        f"Failed to converge after {maxiter} iterations, " f"values are {a1}."
+    )
+
 
 def _fit_s(D, a0, logp, tol=1e-7, maxiter=1000):
-    '''Assuming a fixed mean for Dirichlet distribution, maximize likelihood
-    for preicision a.k.a. s'''
+    """Assuming a fixed mean for Dirichlet distribution, maximize likelihood
+    for preicision a.k.a. s"""
     N, K = D.shape
     s1 = a0.sum()
     m = a0 / s1
-    mlogp = (m*logp).sum()
+    mlogp = (m * logp).sum()
     for i in range(maxiter):
         s0 = s1
-        g = psi(s1) - (m*psi(s1*m)).sum() + mlogp
-        h = _trigamma(s1) - ((m**2)*_trigamma(s1*m)).sum()
+        g = psi(s1) - (m * psi(s1 * m)).sum() + mlogp
+        h = _trigamma(s1) - ((m ** 2) * _trigamma(s1 * m)).sum()
 
         if g + s1 * h < 0:
-            s1 = 1/(1/s0 + g/h/(s0**2))
+            s1 = 1 / (1 / s0 + g / h / (s0 ** 2))
         if s1 <= 0:
-            s1 = s0 * exp(-g/(s0*h + g)) # Newton on log s
+            s1 = s0 * exp(-g / (s0 * h + g))  # Newton on log s
         if s1 <= 0:
-            s1 = 1/(1/s0 + g/((s0**2)*h + 2*s0*g)) # Newton on 1/s
+            s1 = 1 / (1 / s0 + g / ((s0 ** 2) * h + 2 * s0 * g))  # Newton on 1/s
         if s1 <= 0:
-            s1 = s0 - g/h # Newton
+            s1 = s0 - g / h  # Newton
         if s1 <= 0:
-            raise Exception(f'Unable to update s from {s0}')
+            raise Exception(f"Unable to update s from {s0}")
 
         a = s1 * m
         if abs(s1 - s0) < tol:
             return a
 
-    raise Exception(f'Failed to converge after {maxiter} iterations, '
-                    f's is {s1}')
+    raise Exception(f"Failed to converge after {maxiter} iterations, " f"s is {s1}")
+
 
 def _fit_m(D, a0, logp, tol=1e-7, maxiter=1000):
-    '''With fixed precision s, maximize mean m'''
-    N,K = D.shape
+    """With fixed precision s, maximize mean m"""
+    N, K = D.shape
     s = a0.sum()
 
     for i in range(maxiter):
         m = a0 / s
-        a1 = _ipsi(logp + (m*(psi(a0) - logp)).sum())
-        a1 = a1/a1.sum() * s
+        a1 = _ipsi(logp + (m * (psi(a0) - logp)).sum())
+        a1 = a1 / a1.sum() * s
 
         if norm(a1 - a0) < tol:
             return a1
         a0 = a1
 
-    raise Exception(f'Failed to converge after {maxiter} iterations, '
-                    f's is {s1}')
+    raise Exception(f"Failed to converge after {maxiter} iterations, " f"s is {s1}")
+
 
 def _init_a(D):
-    '''Initial guess for Dirichlet alpha parameters given data D'''
+    """Initial guess for Dirichlet alpha parameters given data D"""
     E = D.mean(axis=0)
-    E2 = (D**2).mean(axis=0)
-    return ((E[0] - E2[0])/(E2[0]-E[0]**2)) * E
+    E2 = (D ** 2).mean(axis=0)
+    return ((E[0] - E2[0]) / (E2[0] - E[0] ** 2)) * E
+
 
 def _ipsi(y, tol=1.48e-9, maxiter=10):
-    '''Inverse of psi (digamma) using Newton's method. For the purposes
+    """Inverse of psi (digamma) using Newton's method. For the purposes
     of Dirichlet MLE, since the parameters a[i] must always
-    satisfy a > 0, we define ipsi :: R -> (0,inf).'''
-    y = asanyarray(y, dtype='float')
-    x0 = np.piecewise(y, [y >= -2.22, y < -2.22],
-            [(lambda x: exp(x) + 0.5), (lambda x: -1/(x+euler))])
+    satisfy a > 0, we define ipsi :: R -> (0,inf)."""
+    y = asanyarray(y, dtype="float")
+    x0 = np.piecewise(
+        y,
+        [y >= -2.22, y < -2.22],
+        [(lambda x: exp(x) + 0.5), (lambda x: -1 / (x + euler))],
+    )
     for i in range(maxiter):
-        x1 = x0 - (psi(x0) - y)/_trigamma(x0)
+        x1 = x0 - (psi(x0) - y) / _trigamma(x0)
         if norm(x1 - x0) < tol:
             return x1
         x0 = x1
-    raise Exception(f'Failed to converge after {maxiter} iterations, '
-                    f'value is {x1}')
+    raise Exception(f"Failed to converge after {maxiter} iterations, " f"value is {x1}")
+
 
 def _trigamma(x):
     return polygamma(1, x)

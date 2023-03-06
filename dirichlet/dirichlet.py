@@ -277,9 +277,9 @@ def _meanprecision(D, tol=1e-7, maxiter=None):
     if maxiter is None:
         maxiter = MAXINT
     for i in range(maxiter):
-        a1 = _fit_s(D, a0, logp, tol=tol)
+        a1 = _fit_s(D, a0, logp, tol=tol, maxiter=maxiter)
         s1 = sum(a1)
-        a1 = _fit_m(D, a1, logp, tol=tol)
+        a1 = _fit_m(D, a1, logp, tol=tol, maxiter=maxiter)
         m = a1 / s1
         # Much faster convergence than with the more obvious condition
         # `norm(a1-a0) < tol`

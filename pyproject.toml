@@ -4,7 +4,7 @@ build-backend = "uv_build"
 
 [project]
 name = "dirichlet"
-version = "0.10.0"
+version = "1.0.0"
 description = "Calculates Dirichlet test and plots 2-simplex Dirichlets"
 readme = "README.md"
 requires-python = ">=3.10"

@@ -1,7 +1,5 @@
 """Tests for the functions in the Simplex module."""
 
-import sys
-
 import numpy as np
 import numpy.linalg
 

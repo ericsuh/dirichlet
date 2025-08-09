@@ -1,0 +1,79 @@
+[build-system]
+requires = ["uv_build>=0.8.7,<0.9.0"]
+build-backend = "uv_build"
+
+[project]
+name = "dirichlet"
+version = "0.9"
+description = "Calculates Dirichlet test and plots 2-simplex Dirichlets"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [
+    {name = "Eric Suh", email = "contact@ericsuh.com"},
+]
+maintainers = [
+    {name = "Eric Suh", email = "contact@ericsuh.com"},
+]
+classifiers = [
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+]
+dependencies = [
+    "scipy>=1.4.1",
+    "numpy>=1.18.1",
+    "matplotlib>=3.2.0",
+]
+
+[project.urls]
+Homepage = "http://github.com/ericsuh/dirichlet"
+Repository = "https://github.com/ericsuh/dirichlet"
+"Bug Tracker" = "https://github.com/ericsuh/dirichlet/issues"
+
+[dependency-groups]
+dev = [
+    "pytest>=6.0",
+    "ruff>=0.12.4",
+]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 88
+indent-width = 4
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+    "I",    # isort
+    "B",    # flake8-bugbear
+    "C4",   # flake8-comprehensions
+    "UP",   # pyupgrade
+    "ARG",  # flake8-unused-arguments
+    "SIM",  # flake8-simplify
+]
+ignore = [
+    "E501",  # line too long, handled by formatter
+]
+
+[tool.ruff.lint.per-file-ignores]
+"test/*.py" = ["ARG001", "ARG002"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"

@@ -76,7 +76,7 @@ def scatter(points, vertexlabels=None, **kwargs):
         ``c == (0,0,1)``.
     **kwargs : any
         Arguments to :func:`plt.scatter`.
-    
+
     Returns
     -------
     matplotlib.figure.Figure
@@ -105,7 +105,7 @@ def contour(f, vertexlabels=None, **kwargs):
         ``c == (0,0,1)``.
     **kwargs : any
         Arguments to :func:`plt.tricontour`.
-        
+
     Returns
     -------
     matplotlib.figure.Figure
@@ -138,7 +138,7 @@ def _contour(f, vertexlabels=None, contourfunc=None, **kwargs):
     y = np.linspace(0, np.sqrt(3.0) / 2.0, 100)
     points2d = np.transpose([np.tile(x, len(y)), np.repeat(y, len(x))])
     points3d = barycentric(points2d)
-    valid = (points3d.sum(axis=1) == 1.0) & ((0.0 <= points3d).all(axis=1))
+    valid = (points3d.sum(axis=1) == 1.0) & ((points3d >= 0.0).all(axis=1))
     points2d = points2d[np.where(valid), :][0]
     points3d = points3d[np.where(valid), :][0]
     z = f(points3d)

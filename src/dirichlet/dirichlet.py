@@ -1,4 +1,5 @@
-"""Dirichlet.py
+"""
+Dirichlet.py
 
 Maximum likelihood estimation and likelihood ratio tests of Dirichlet
 distribution models of data.
@@ -7,31 +8,22 @@ Most of this package is a port of Thomas P. Minka's wonderful Fastfit MATLAB
 code. Much thanks to him for that and his clear paper "Estimating a Dirichlet
 distribution". See the following URL for more information:
 
-    http://research.microsoft.com/en-us/um/people/minka/"""
+    http://research.microsoft.com/en-us/um/people/minka/
+"""
 
 import sys
 
 import numpy as np
-import scipy as sp
 import scipy.stats as stats
 from numpy import (
-    arange,
-    array,
     asanyarray,
-    asarray,
-    diag,
     exp,
-    isscalar,
     log,
-    ndarray,
     ones,
     vstack,
-    zeros,
 )
 from numpy.linalg import norm
 from scipy.special import gammaln, polygamma, psi
-
-from . import simplex
 
 MAXINT = sys.maxsize
 
@@ -47,8 +39,8 @@ euler = -1 * psi(1)  # Euler-Mascheroni constant
 
 
 class NotConvergingError(Exception):
-    """Error when a successive approximation method doesn't converge
-    """
+    """Error when a successive approximation method doesn't converge"""
+
     pass
 
 
@@ -81,7 +73,7 @@ def test(D1, D2, method="meanprecision", maxiter=None):
     a0 : (K,) shape array
     a1 : (K,) shape array
     a2 : (K,) shape array
-        MLE parameters for the Dirichlet distributions fit to 
+        MLE parameters for the Dirichlet distributions fit to
         ``D1`` and ``D2`` together, ``D1``, and ``D2``, respectively."""
 
     N1, K1 = D1.shape
@@ -122,13 +114,13 @@ def pdf(alphas):
         ----------
         xs : (N, K) shape array
             The ``(N, K)`` shape input matrix
-        
+
         Returns
         -------
         (N,) shape array
             Point value for PDF
         """
-        return c * (xs ** alphap).prod(axis=1)
+        return c * (xs**alphap).prod(axis=1)
 
     return dirichlet
 
@@ -229,7 +221,7 @@ def _fixedpoint(D, tol=1e-7, maxiter=None):
     # Start updating
     if maxiter is None:
         maxiter = MAXINT
-    for i in range(maxiter):
+    for _i in range(maxiter):
         a1 = _ipsi(psi(a0.sum()) + logp)
         # Much faster convergence than with the more obvious condition
         # `norm(a1-a0) < tol`
@@ -237,7 +229,7 @@ def _fixedpoint(D, tol=1e-7, maxiter=None):
             return a1
         a0 = a1
     raise NotConvergingError(
-        "Failed to converge after {} iterations, values are {}.".format(maxiter, a1)
+        f"Failed to converge after {maxiter} iterations, values are {a1}."
     )
 
 
@@ -271,27 +263,27 @@ def _meanprecision(D, tol=1e-7, maxiter=None):
     elif s0 == 0:
         a0 = ones(a0.shape) / len(a0)
         s0 = 1
-    m0 = a0 / s0
+    a0 / s0
 
     # Start updating
     if maxiter is None:
         maxiter = MAXINT
-    for i in range(maxiter):
+    for _i in range(maxiter):
         a1 = _fit_s(D, a0, logp, tol=tol)
         s1 = sum(a1)
         a1 = _fit_m(D, a1, logp, tol=tol)
-        m = a1 / s1
+        a1 / s1
         # Much faster convergence than with the more obvious condition
         # `norm(a1-a0) < tol`
         if abs(loglikelihood(D, a1) - loglikelihood(D, a0)) < tol:
             return a1
         a0 = a1
     raise NotConvergingError(
-        f"Failed to converge after {maxiter} iterations, " f"values are {a1}."
+        f"Failed to converge after {maxiter} iterations, values are {a1}."
     )
 
 
-def _fit_s(D, a0, logp, tol=1e-7, maxiter=1000):
+def _fit_s(D, a0, logp, tol=1e-7, maxiter=1000):  # noqa: ARG001
     """Update parameters via MLE of precision with fixed mean
 
     Parameters
@@ -316,17 +308,17 @@ def _fit_s(D, a0, logp, tol=1e-7, maxiter=1000):
     s1 = a0.sum()
     m = a0 / s1
     mlogp = (m * logp).sum()
-    for i in range(maxiter):
+    for _i in range(maxiter):
         s0 = s1
         g = psi(s1) - (m * psi(s1 * m)).sum() + mlogp
-        h = _trigamma(s1) - ((m ** 2) * _trigamma(s1 * m)).sum()
+        h = _trigamma(s1) - ((m**2) * _trigamma(s1 * m)).sum()
 
         if g + s1 * h < 0:
-            s1 = 1 / (1 / s0 + g / h / (s0 ** 2))
+            s1 = 1 / (1 / s0 + g / h / (s0**2))
         if s1 <= 0:
             s1 = s0 * exp(-g / (s0 * h + g))  # Newton on log s
         if s1 <= 0:
-            s1 = 1 / (1 / s0 + g / ((s0 ** 2) * h + 2 * s0 * g))  # Newton on 1/s
+            s1 = 1 / (1 / s0 + g / ((s0**2) * h + 2 * s0 * g))  # Newton on 1/s
         if s1 <= 0:
             s1 = s0 - g / h  # Newton
         if s1 <= 0:
@@ -336,10 +328,12 @@ def _fit_s(D, a0, logp, tol=1e-7, maxiter=1000):
         if abs(s1 - s0) < tol:
             return a
 
-    raise NotConvergingError(f"Failed to converge after {maxiter} iterations, " f"s is {s1}")
+    raise NotConvergingError(
+        f"Failed to converge after {maxiter} iterations, s is {s1}"
+    )
 
 
-def _fit_m(D, a0, logp, tol=1e-7, maxiter=1000):
+def _fit_m(D, a0, logp, tol=1e-7, maxiter=1000):  # noqa: ARG001
     """Update parameters via MLE of mean with fixed precision s
 
     Parameters
@@ -362,7 +356,7 @@ def _fit_m(D, a0, logp, tol=1e-7, maxiter=1000):
     (K,) shape array
         Updated parameters for Dirichlet distribution."""
     s = a0.sum()
-    for i in range(maxiter):
+    for _i in range(maxiter):
         m = a0 / s
         a1 = _ipsi(logp + (m * (psi(a0) - logp)).sum())
         a1 = a1 / a1.sum() * s
@@ -371,7 +365,7 @@ def _fit_m(D, a0, logp, tol=1e-7, maxiter=1000):
             return a1
         a0 = a1
 
-    raise NotConvergingError(f"Failed to converge after {maxiter} iterations, " f"s is {s}")
+    raise NotConvergingError(f"Failed to converge after {maxiter} iterations, s is {s}")
 
 
 def _init_a(D):
@@ -388,7 +382,7 @@ def _init_a(D):
     (K,) shape array
         Crude guess for parameters of Dirichlet distribution."""
     E = D.mean(axis=0)
-    E2 = (D ** 2).mean(axis=0)
+    E2 = (D**2).mean(axis=0)
     return ((E[0] - E2[0]) / (E2[0] - E[0] ** 2)) * E
 
 
@@ -396,7 +390,7 @@ def _ipsi(y, tol=1.48e-9, maxiter=10):
     """Inverse of psi (digamma) using Newton's method. For the purposes
     of Dirichlet MLE, since the parameters a[i] must always
     satisfy a > 0, we define ipsi :: R -> (0,inf).
-    
+
     Parameters
     ----------
     y : (K,) shape array
@@ -417,12 +411,14 @@ def _ipsi(y, tol=1.48e-9, maxiter=10):
         [y >= -2.22, y < -2.22],
         [(lambda x: exp(x) + 0.5), (lambda x: -1 / (x + euler))],
     )
-    for i in range(maxiter):
+    for _i in range(maxiter):
         x1 = x0 - (psi(x0) - y) / _trigamma(x0)
         if norm(x1 - x0) < tol:
             return x1
         x0 = x1
-    raise NotConvergingError(f"Failed to converge after {maxiter} iterations, " f"value is {x1}")
+    raise NotConvergingError(
+        f"Failed to converge after {maxiter} iterations, value is {x1}"
+    )
 
 
 def _trigamma(x):

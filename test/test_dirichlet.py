@@ -1,7 +1,5 @@
 """Tests for the functions in the Dirichlet package."""
 
-import sys
-
 import numpy
 import pytest
 from numpy.linalg import norm

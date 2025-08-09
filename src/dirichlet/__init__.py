@@ -1,4 +1,3 @@
-from . import simplex
 from .dirichlet import loglikelihood, meanprecision, mle, pdf, test
 
-__all__ = ["pdf", "test", "mle", "meanprecision", "loglikelihood", "simplex"]
+__all__ = ["pdf", "test", "mle", "meanprecision", "loglikelihood"]

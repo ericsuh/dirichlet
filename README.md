@@ -23,7 +23,7 @@ but with Dirichlet models.
 Simplex Plots
 -------------
 
-The `dirichlet.simplex` module creates scatter, contour, and filled contour 2-simplex plots.
+The `dirichlet.simplex` module creates scatter, contour, and filled contour 2-simplex plots. To use this, be sure to install the `simplex` package "extra" (e.g. `pip install dirichlet[simplex]`).
 
 Caveats
 -------
@@ -36,32 +36,27 @@ make this package work in your context, but that will depend on your application
 Installation
 ------------
 
-    pip install git+https://github.com/ericsuh/dirichlet.git
+    pip install dirichlet
+    # or
+    uv add dirichlet
 
-This has only been tested with Python 3.6+. Other versions may work, but they
+This has only been tested with Python 3.10+. Other versions may work, but they
 haven't been tested.
 
 Development
 -----------
 
-*Note*: These instructions have only been tested on Ubuntu/Debian.
+To install dev tooling, run:
 
-Dev dependencies are listed in `requirements-dev.txt`. You can install them
-with:
+    uv sync --frozen --locked --all-groups --all-extras
 
-    pip install -r requirements-dev.txt
+    # To format
+    uv run ruff format
 
-### Code style
+    # To test
+    uv run pytest
 
-Please use [`black`](https://black.readthedocs.io/) to format your code when contributing
+    # To lint
+    uv run ruff
 
-### Testing
-
-This project uses [`tox`](https://tox.readthedocs.io/) and
-[`pytest`](https://pytest.readthedocs.io/) for testing. To run tests,
-generally you can just run:
-
-    tox
-
-To test a particular version of Python, you will need to have it
-installed and in your `$PATH` ahead of time.
+A Github workflow will run tests against several Python versions.
